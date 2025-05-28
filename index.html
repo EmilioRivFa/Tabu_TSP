@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TSP con Búsqueda Tabú</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center px-4">
+
+  <div class="bg-white shadow-xl rounded-2xl p-8 max-w-lg w-full">
+    <h1 class="text-2xl font-bold text-center text-purple-600 mb-6">Tabu Search - TSP</h1>
+
+    <form id="formulario" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Iteraciones</label>
+        <input type="number" id="iteraciones" required
+               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-purple-500 focus:border-purple-500"/>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Tamaño de Lista Tabú</label>
+        <input type="number" id="tamano_tabu" required
+               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-purple-500 focus:border-purple-500"/>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Ciudad de Origen</label>
+        <select id="origen" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-purple-500 focus:border-purple-500">
+          <option value="">Selecciona</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Ciudad de Destino</label>
+        <select id="destino" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-purple-500 focus:border-purple-500">
+          <option value="">Selecciona</option>
+        </select>
+      </div>
+
+      <button type="submit"
+              class="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition duration-200">
+        Calcular Ruta Óptima
+      </button>
+    </form>
+
+    <div id="resultado" class="mt-6 text-gray-800 text-sm whitespace-pre-wrap font-mono"></div>
+  </div>
+
+  <script>
+    const ciudades = {
+      'Jiloyork': [19.916012, -99.580580],
+      'Toluca': [19.289165, -99.655697],
+      'Atlacomulco': [19.799520, -99.873844],
+      'Guadalajara': [20.677754, -103.346254],
+      'Monterrey': [25.691611, -100.321838],
+      'QuintanaRoo': [21.163112, -86.802315],
+      'Michohacan': [19.701400, -101.208297],
+      'Aguascalientes': [21.876410, -102.264387],
+      'CDMX': [19.432713, -99.133183],
+      'QRO': [20.597194, -100.386670]
+    };
+
+    const origenSelect = document.getElementById("origen");
+    const destinoSelect = document.getElementById("destino");
+
+    // Llenar selects dinámicamente
+    Object.keys(ciudades).forEach(ciudad => {
+      const option1 = document.createElement("option");
+      option1.value = ciudad;
+      option1.text = ciudad;
+      origenSelect.add(option1);
+
+      const option2 = document.createElement("option");
+      option2.value = ciudad;
+      option2.text = ciudad;
+      destinoSelect.add(option2);
+    });
+
+    document.getElementById("formulario").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const iteraciones = document.getElementById("iteraciones").value;
+      const tamano_tabu = document.getElementById("tamano_tabu").value;
+      const origen = document.getElementById("origen").value;
+      const destino = document.getElementById("destino").value;
+
+      if (origen === destino) {
+        document.getElementById("resultado").innerText = "❌ El origen y el destino deben ser diferentes.";
+        return;
+      }
+
+      const res = await fetch("http://127.0.0.1:5000/resolver-tsp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ ciudades, origen, destino, iteraciones, tamano_tabu })
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        document.getElementById("resultado").innerText = "❌ Error: " + data.error;
+        return;
+      }
+
+      let rutaTexto = `🔁 Ruta: \n→ ${data.ruta.join(" → ")}\n📏 Distancia total: ${data.distancia}`;
+
+      let historialTexto = "\n\n📊 Historial por Iteración:\n";
+      data.historial.forEach(paso => {
+        historialTexto += `🌀 Iteración ${paso.iteracion}, Distancia: ${paso.distancia}\n`;
+      });
+
+      document.getElementById("resultado").innerText = rutaTexto + historialTexto;
+    });
+  </script>
+
+</body>
+</html>
