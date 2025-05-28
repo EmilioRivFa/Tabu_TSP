@@ -1,9 +1,9 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import random
 import math
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 CORS(app)
 
 def distancia(coord1, coord2):
@@ -74,8 +74,8 @@ def resolver_tsp():
 
         ciudades = data['ciudades']
         origen = data['origen']
-        iteraciones = int(data['iteraciones'])  # nuevo parámetro
-        tamanio_tabu = int(data['tamano_tabu'])  # nuevo parámetro
+        iteraciones = int(data['iteraciones'])
+        tamanio_tabu = int(data['tamano_tabu'])
 
         if origen not in ciudades:
             return jsonify({"error": "La ciudad de origen no está en el diccionario de ciudades."}), 400
@@ -97,9 +97,10 @@ def resolver_tsp():
     except Exception as e:
         print("🔥 ERROR:", str(e))
         return jsonify({"error": str(e)}), 500
+
 @app.route('/')
 def home():
-    return "API TSP con Búsqueda Tabú está corriendo."
+    return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
